@@ -1,78 +1,53 @@
 import { serve } from "@hono/node-server";
-import { PrismaClient } from "../../clg-prisma/generated/prisma/client.js";
-
+import { PrismaClient } from "@prisma/client";
 import { Hono } from "hono";
+import { auth, type AuthType } from "../auth.js";
+import { cors } from "hono/cors";
 
-const app = new Hono();
 const prisma = new PrismaClient();
 
+const app = new Hono<{
+  Variables: {
+    prisma: PrismaClient;
+  };
+  Bindings: AuthType;
+}>();
 
-app.get("/", (c) => {
-  return c.text("Hello Hono!");
+app.use(
+  "/api/auth/*",
+  cors({
+    origin: "http://localhost/5173",
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
+    credentials: true,
+  })
+);
+
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+app.use(async (c, next) => {
+  c.set("prisma", prisma);
+  await next();
 });
 
-
-
-
-
-app.get("/students", async (c)=> {
-
-  try {
-     const students = await prisma.student.findMany(); // ✅ fix typo and model name
-    return c.json(students);
-  }
-
-  catch (error) {
-    console.error(error);
-    return c.json({ error: "Failed to fetch students" }, 500);
-  }
+app.get("/v1/:resource", async (c) => {
+  const prisma = c.get("prisma");
+  const resource = c.req.param("resource") as keyof typeof prisma;
+  const query = c.req.query();
+  // @ts-ignore
+  const result = await prisma[resource].findMany(query);
+  return c.json(result);
 });
 
-
-
-
-
-
-
-app.post("/students", async (c) => {
-  try {
-    const body = await c.req.json();
-
-    // Validate department
-    const department = await prisma.department.findUnique({
-      where: { id: body.departmentId },
-    });
-
-    if (!department) {
-      return c.json({ error: "Department not found" }, 400);
-    }
-
-    const student = await prisma.student.create({
-      data: {
-        name: body.name,
-        email: body.email,
-        rollNumber: body.rollNumber,
-        dob: new Date(body.dob),
-        departmentId: body.departmentId,
-        address: body.address,
-        profileId: body.profileId, // Optional
-      },
-    });
-
-    return c.json(student, 201);
-  } catch (err) {
-    console.error(err);
-    return c.json({ error: "Error creating student" }, 500);
-  }
+app.post("/v1/:resource", async (c) => {
+  const prisma = c.get("prisma");
+  const resource = c.req.param("resource") as keyof typeof prisma;
+  const data = c.req.json();
+  // @ts-ignore
+  await prisma[resource].create(data);
 });
-
-
-app.post("/departments", async (c) => {
-  const body = await c.req.json();
-  const dept = await prisma.department.create({ data: body });
-  return c.json(dept);
-});
-
 
 serve(
   {
