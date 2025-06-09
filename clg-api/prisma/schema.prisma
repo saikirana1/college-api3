@@ -1,11 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native"]
 }
 
@@ -13,19 +7,14 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-enum Role {
-  STUDENT
-  FACULTY
-  ADMIN
-}
 
 model Department {
   id        Int       @id @default(autoincrement())
   name      String    @unique
   code      String    @unique
-  students  Student[]
-  faculties Faculty[]
   courses   Course[]
+  faculties Faculty[]
+  students  Student[]
 }
 
 model Student {
@@ -34,12 +23,12 @@ model Student {
   email        String       @unique
   rollNumber   String       @unique
   dob          DateTime
-  department   Department   @relation(fields: [departmentId], references: [id])
   departmentId Int
   address      String?
-  enrollments  Enrollment[]
-  profile      Profile?     @relation(fields: [profileId], references: [id])
   profileId    Int?         @unique
+  enrollments  Enrollment[]
+  department   Department   @relation(fields: [departmentId], references: [id])
+  profile      Profile?     @relation(fields: [profileId], references: [id])
 }
 
 model Faculty {
@@ -47,9 +36,9 @@ model Faculty {
   name         String
   email        String     @unique
   designation  String?
-  department   Department @relation(fields: [departmentId], references: [id])
   departmentId Int
   courses      Course[]
+  department   Department @relation(fields: [departmentId], references: [id])
 }
 
 model Course {
@@ -57,22 +46,22 @@ model Course {
   title        String
   code         String       @unique
   credits      Int
-  department   Department   @relation(fields: [departmentId], references: [id])
   departmentId Int
-  faculty      Faculty?     @relation(fields: [facultyId], references: [id])
   facultyId    Int?
+  department   Department   @relation(fields: [departmentId], references: [id])
+  faculty      Faculty?     @relation(fields: [facultyId], references: [id])
   enrollments  Enrollment[]
 }
 
 model Enrollment {
   id        Int      @id @default(autoincrement())
-  student   Student  @relation(fields: [studentId], references: [id])
   studentId Int
-  course    Course   @relation(fields: [courseId], references: [id])
   courseId  Int
   grade     String?
   semester  Int
   createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id])
 
   @@unique([studentId, courseId])
 }
@@ -89,22 +78,23 @@ model Profile {
 model User {
   id            String    @id
   name          String
-  email         String
+  username      String   @map("username")
+  displayUsername String @map("display_username")
+  email         String    @unique
   emailVerified Boolean
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
-  sessions      Session[]
   accounts      Account[]
+  sessions      Session[]
 
-  @@unique([email])
-  @@map("user")
+  @@map("users")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime
   updatedAt DateTime
   ipAddress String?
@@ -112,7 +102,6 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
@@ -121,7 +110,6 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -131,6 +119,7 @@ model Account {
   password              String?
   createdAt             DateTime
   updatedAt             DateTime
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -145,3 +134,13 @@ model Verification {
 
   @@map("verification")
 }
+
+enum Role {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+
+
+

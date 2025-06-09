@@ -1,8 +1,8 @@
 import { serve } from "@hono/node-server";
 import { PrismaClient } from "@prisma/client";
 import { Hono } from "hono";
-import { auth, type AuthType } from "../auth.js";
-import { cors } from "hono/cors";
+import { auth, type AuthType } from "./auth.js";
+// import { cors } from "hono/cors";
 
 const prisma = new PrismaClient();
 
@@ -13,17 +13,17 @@ const app = new Hono<{
   Bindings: AuthType;
 }>();
 
-app.use(
-  "/api/auth/*",
-  cors({
-    origin: "http://localhost/5173",
-    allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "OPTIONS"],
-    exposeHeaders: ["Content-Length"],
-    maxAge: 600,
-    credentials: true,
-  })
-);
+// app.use(
+//   "/api/auth/*",
+//   cors({
+//     origin: "http://localhost/5173",
+//     allowHeaders: ["Content-Type", "Authorization"],
+//     allowMethods: ["POST", "GET", "OPTIONS"],
+//     exposeHeaders: ["Content-Length"],
+//     maxAge: 600,
+//     credentials: true,
+//   })
+// );
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
@@ -40,6 +40,8 @@ app.get("/v1/:resource", async (c) => {
   const result = await prisma[resource].findMany(query);
   return c.json(result);
 });
+
+
 
 app.post("/v1/:resource", async (c) => {
   const prisma = c.get("prisma");

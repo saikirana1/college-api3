@@ -4,13 +4,15 @@ const client = createAuthClient({
   baseURL: "http://localhost:3000",
   plugins: [usernameClient()],
 });
+
+
 async function signup() {
   await client.signUp.email(
     {
-      email: "faiz@konic.net",
+      email: "sai@konic.net",
       password: "abc123!@#",
-      name: "Faizuddin",
-      username: "faiz",
+      name: "saikiran",
+      username: "sai",
     },
     {
       onSuccess(response) {
@@ -24,16 +26,22 @@ async function signup() {
     },
   );
 }
+
+
 async function sample() {
   const response = await fetch("http://localhost:3000/v1/User").then((res) =>
     res.json(),
   );
   console.log(response);
 }
+
+
+
+
 async function signin() {
   await client.signIn.email(
     {
-      email: "faiz@konic.net",
+      email: "sai@konic.net",
       password: "abc123!@#",
     },
     {
@@ -48,4 +56,7 @@ async function signin() {
     },
   );
 }
-signin().then().catch(console.error);
+
+
+signup()
+signin()
